@@ -1,0 +1,402 @@
+/* ==========================
+   Root Variables
+========================== */
+:root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --surface: #f1f5f9;
+    --text: #0f172a;
+    --muted: #64748b;
+    --green: #16a34a;
+    --red: #dc2626;
+    --blue: #3b82f6;
+    --border: rgba(15, 23, 42, 0.08);
+    --radius-md: 12px;
+    --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.06);
+    --font-family: 'Inter', sans-serif;
+    --transition: 0.3s ease;
+}
+
+/* ==========================
+   Global Styles
+========================== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+}
+
+button {
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition);
+    border: none;
+    font-family: inherit;
+}
+
+/* ==========================
+   Header
+========================== */
+header {
+    text-align: center;
+    padding: 24px 16px;
+}
+
+header h1 {
+    font-size: 2rem;
+    margin-bottom: 4px;
+}
+
+header p {
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+header nav {
+    margin-top: 12px;
+}
+
+header nav button {
+    margin: 0 6px;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    background-color: var(--surface);
+    color: var(--text);
+    font-weight: 500;
+}
+
+header nav button.active {
+    background-color: var(--blue);
+    color: #fff;
+}
+
+/* ==========================
+   Sections & Cards
+========================== */
+.section {
+    background-color: var(--card);
+    margin: 16px auto;
+    padding: 24px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    max-width: 1200px;
+    transition: box-shadow var(--transition);
+}
+
+.section:hover {
+    box-shadow: 0 12px 28px rgba(15,23,42,0.08);
+}
+
+/* ==========================
+   Chart & Grafik
+========================== */
+.grafik {
+    margin-top: 24px;
+}
+
+/* ==========================
+   Grafik Filter - Vertical Layout
+========================== */
+.grafik-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    background-color: var(--surface);
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.03);
+}
+
+/* Baris tipe filter */
+.filter-tipe-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Baris range + tombol */
+.filter-range-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Input, select, button styling */
+.grafik-filter select,
+.grafik-filter input[type="month"],
+.grafik-filter input[type="number"] {
+    padding: 6px 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background-color: var(--card);
+    min-width: 120px;
+    transition: border-color 0.3s ease;
+}
+
+.grafik-filter select:focus,
+.grafik-filter input:focus {
+    outline: none;
+    border-color: var(--green);
+}
+
+.grafik-filter button {
+    padding: 8px 14px;
+    border-radius: var(--radius-md);
+    border: none;
+    background-color: var(--green);
+    color: #fff;
+    font-weight: 500;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.grafik-filter button:hover {
+    background-color: #13803c;
+    transform: translateY(-1px);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .filter-tipe-row,
+    .filter-range-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .grafik-filter select,
+    .grafik-filter input,
+    .grafik-filter button {
+        width: 100%;
+    }
+}
+
+/* ==========================
+   Tables
+========================== */
+.table-wrapper {
+    overflow-x: auto;
+    margin-top: 12px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+th, td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+th {
+    background-color: #f1f1f1;
+    text-align: center;
+}
+
+td:last-child {
+    text-align: right;
+}
+
+td.pemasukan { color: var(--green); font-weight: 500; }
+td.pengeluaran { color: var(--red); font-weight: 500; }
+
+/* ==========================
+   Filters & Controls
+========================== */
+.catatan-filter {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+input, select {
+    padding: 6px 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background-color: var(--surface);
+    transition: border-color var(--transition);
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--green);
+}
+
+/* ==========================
+   Ringkasan Catatan
+========================== */
+.ringkasan-catatan {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.ringkasan-catatan p {
+    margin: 6px 0;
+    font-weight: 600;
+}
+
+/* ==========================
+   Footer
+========================== */
+#last-update {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 16px;
+}
+
+/* ==========================
+   Responsive
+========================== */
+@media (max-width: 768px) {
+    .totals {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+@media (max-width: 480px) {
+    header h1 { font-size: 1.5rem; }
+    .section { padding: 16px; margin: 12px; }
+}
+
+
+/* ==========================
+   Button Styles
+========================== */
+#btn-filter-grafik {
+    padding: 8px 14px;
+    background-color: var(--blue);
+    color: #fff;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+}
+
+#btn-filter-grafik-tahun {
+    padding: 8px 14px;
+    background-color: var(--blue);
+    color: #fff;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+}
+
+#btn-filter-transaksi {
+    padding: 8px 14px;
+    background-color: var(--blue);
+    color: #fff;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+}
+
+#btn-reset-transaksi {
+    padding: 8px 14px;
+    background-color: var(--red);
+    color: #fff;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+}
+
+#btn-tampil-catatan {
+    padding: 8px 14px;
+    background-color: var(--blue);
+    color: #fff;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+}
+
+#btn-pdf-catatan {
+    padding: 8px 14px;
+    background-color: var(--text);
+    color: #fff;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+}
+
+/* ==========================
+   Saldo & Totals Layout
+========================== */
+
+/* Semua card dasar: saldo dan totals items */
+.saldo-card,
+.totals .total-item {
+    background-color: var(--surface);
+    padding: 16px;
+    margin-bottom: 16px;
+    border-radius: var(--radius-md);
+    text-align: center;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.03);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+/* Totals container - flex desktop */
+.totals {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap; /* agar mobile auto-wrap */
+}
+
+/* Totals items - default 50% desktop */
+.totals .total-item {
+    flex: 1 1 calc(50% - 8px); /* dua kolom minus sebagian gap */
+    min-width: 200px;
+}
+
+/* Mobile - semua full-width */
+@media (max-width: 768px) {
+    .saldo-card,
+    .totals .total-item {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+    .totals {
+    gap: 0;
+    }   
+}
+
+/* ==========================
+   TABEL CATATAN (MONOCHROME)
+========================== */
+
+.tabel-transaksi,
+.tabel-ringkasan {
+    width: 100%;
+    border-collapse: collapse;
+    color: #000;
+}
+
+/* Sel tabel */
+.tabel-transaksi th,
+.tabel-transaksi td,
+.tabel-ringkasan td {
+    border: 1px solid #000;
+    padding: 8px 10px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+/* Header tabel */
+.tabel-transaksi th {
+    font-weight: bold;
+    background: none;
+    text-align: center;
+}
+
+/* Footer (saldo) */
+.tabel-transaksi tfoot td {
+    font-weight: bold;
+    text-align: right;
+    background: none;
+}

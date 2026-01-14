@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <!-- Basic Meta -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Dana Husnul | Catatan Keuangan Masjid Husnul Khatimah</title>
+
+    <meta name="description" content="Dana Husnul adalah aplikasi catatan keuangan Masjid Husnul Khatimah untuk mencatat pemasukan, pengeluaran, saldo, grafik keuangan, dan laporan PDF.">
+    <meta name="keywords" content="Dana Husnul, keuangan masjid, catatan keuangan masjid, laporan keuangan masjid, saldo masjid">
+    <meta name="author" content="Masjid Husnul Khatimah">
+    <meta name="robots" content="index, follow">
+
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>☪️</text></svg>">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+
+<header>
+    <h1>Dana Husnul</h1>
+    <p>Catatan Keuangan Masjid Husnul Khatimah</p>
+
+    <nav>
+        <button data-section="beranda" class="active">Beranda</button>
+        <button data-section="transaksi">Transaksi</button>
+        <button data-section="catatan">Catatan Keuangan</button>
+    </nav>
+</header>
+
+<!-- =========================
+     BERANDA
+========================= -->
+<section id="beranda" class="section">
+    <h2>Beranda</h2>
+
+    <div class="saldo-card">
+        <h3>Saldo</h3>
+        <p id="saldo">Memuat...</p>
+    </div>
+
+    <div class="totals">
+        <div class="total-item pemasukan">
+            <h3>Pemasukan</h3>
+            <p id="total-masuk">-</p>
+        </div>
+        <div class="total-item pengeluaran">
+            <h3>Pengeluaran</h3>
+            <p id="total-keluar">-</p>
+        </div>
+    </div>
+
+    <!-- Filter Grafik -->
+    <div class="grafik-filter">
+        <div class="filter-tipe-row">
+            <label for="filter-tipe">Filter Periode:</label>
+            <select id="filter-tipe">
+                <option value="bulan" selected>Bulan</option>
+                <option value="tahun">Tahun</option>
+            </select>
+        </div>
+
+        <div class="filter-range-row" id="filter-bulan-container">
+            <label>Bulan Mulai</label>
+            <input type="month" id="filter-bulan-start">
+
+            <label>Bulan Akhir</label>
+            <input type="month" id="filter-bulan-end">
+
+            <button id="btn-filter-grafik">Terapkan</button>
+        </div>
+
+        <div class="filter-range-row" id="filter-tahun-container" style="display:none;">
+            <label>Tahun Mulai</label>
+            <input type="number" id="filter-tahun-start" min="2000" max="2100">
+
+            <label>Tahun Akhir</label>
+            <input type="number" id="filter-tahun-end" min="2000" max="2100">
+
+            <button id="btn-filter-grafik-tahun">Terapkan</button>
+        </div>
+    </div>
+
+    <div class="grafik">
+        <canvas id="grafik-keuangan"></canvas>
+    </div>
+</section>
+
+<!-- =========================
+     TRANSAKSI
+========================= -->
+<section id="transaksi" class="section" style="display:none;">
+    <h2>Riwayat Transaksi</h2>
+
+    <div class="transaksi-filter">
+        <label>Pilih Bulan:</label>
+        <input type="month" id="filter-transaksi">
+        <button id="btn-filter-transaksi">Terapkan</button>
+        <button id="btn-reset-transaksi">Reset</button>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Jenis</th>
+                    <th>Keterangan</th>
+                    <th>Nominal</th>
+                </tr>
+            </thead>
+            <tbody id="tabel-transaksi"></tbody>
+        </table>
+    </div>
+</section>
+
+<!-- =========================
+     CATATAN KEUANGAN
+========================= -->
+<section id="catatan" class="section" style="display:none;">
+    <h2>Catatan Keuangan</h2>
+
+    <div class="catatan-filter">
+        <input type="month" id="periode-catatan">
+        <button id="btn-tampil-catatan">Tampilkan</button>
+        <button id="btn-pdf-catatan">Unduh PDF</button>
+    </div>
+
+    <div id="catatan-content">
+        <div class="ringkasan-catatan">
+            <p>Catatan Keuangan</p>
+            <p>Masjid Husnul Khatimah</p>
+            <p id="catatan-periode">Periode: -</p>
+
+            <table class="tabel-ringkasan">
+                <tr><td>Total Pemasukan</td><td id="catatan-total-masuk">Rp 0</td></tr>
+                <tr><td>Total Pengeluaran</td><td id="catatan-total-keluar">Rp 0</td></tr>
+                <tr><td>Saldo</td><td id="catatan-saldo">Rp 0</td></tr>
+            </table>
+        </div>
+
+        <div class="tabel-transaksi-wrapper">
+            <table class="tabel-transaksi">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Tanggal</th>
+                        <th>Jenis</th>
+                        <th>Keterangan</th>
+                        <th>Nominal</th>
+                    </tr>
+                </thead>
+                <tbody id="catatan-tbody"></tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4">Saldo Periode</td>
+                        <td id="tfoot-saldo">Rp 0</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- Scripts -->
+<script src="app.js"></script>
+</body>
+</html>
