@@ -4,6 +4,16 @@ let dataTransaksi = [];
 let chartBeranda = null;
 
 // =======================
+// Validate required libraries
+// =======================
+if (typeof Papa === 'undefined') {
+    console.error('PapaParse library not loaded. Please include PapaParse CDN.');
+}
+if (typeof Chart === 'undefined') {
+    console.error('Chart.js library not loaded. Please include Chart.js CDN.');
+}
+
+// =======================
 // Load CSV
 // =======================
 function parseTanggal(str) {
@@ -23,17 +33,28 @@ Papa.parse(CSV_URL, {
     download: true,
     header: true,
     complete: results => {
-        dataTransaksi = results.data
-            .filter(r => r.Tanggal)
-            .map(r => ({
-                tanggal: parseTanggal(r.Tanggal),
-                jenis: (r.Jenis || '').toLowerCase(),
-                keterangan: r.Keterangan || '-',
-                nominal: parseNominal(r.Nominal)
-            }));
+        try {
+            if (results.errors && results.errors.length > 0) {
+                console.error('CSV parsing errors:', results.errors);
+            }
 
-        renderBeranda();
-        renderTransaksi();
+            dataTransaksi = results.data
+                .filter(r => r.Tanggal)
+                .map(r => ({
+                    tanggal: parseTanggal(r.Tanggal),
+                    jenis: (r.Jenis || '').toLowerCase(),
+                    keterangan: r.Keterangan || '-',
+                    nominal: parseNominal(r.Nominal)
+                }));
+
+            renderBeranda();
+            renderTransaksi();
+        } catch (e) {
+            console.error('Error processing CSV data:', e);
+        }
+    },
+    error: (error) => {
+        console.error('CSV download error:', error);
     }
 });
 
@@ -52,10 +73,19 @@ function parseNominal(value) {
 // Render Beranda
 // =======================
 function renderBeranda(filterType = null, start = null, end = null) {
+    // Check for required DOM elements
+    const requiredElements = ['saldo', 'total-masuk', 'total-keluar', 'grafik-keuangan', 'grafik-container'];
+    const missingElements = requiredElements.filter(id => !document.getElementById(id));
+    if (missingElements.length > 0) {
+        console.error('Missing DOM elements:', missingElements.map(id => `#${id}`));
+        return;
+    }
+
     let totalMasuk = 0, totalKeluar = 0;
     const monthlyMap = {}, yearlyMap = {};
 
     dataTransaksi.forEach(d => {
+        if (!d.tanggal) return; // Skip entries with invalid dates
         const year = d.tanggal.getFullYear();
         const month = d.tanggal.getMonth() + 1;
         const keyMonth = `${year}-${String(month).padStart(2, '0')}`;
@@ -63,9 +93,11 @@ function renderBeranda(filterType = null, start = null, end = null) {
 
         // Filter
         if (filterType === 'bulan' && start && end) {
-            const startDate = new Date(start + '-01');
-            const [yEnd, mEnd] = end.split('-');
-            const endDate = new Date(Number(yEnd), Number(mEnd), 0);
+            const [yStart, mStart] = start.split('-').map(Number);
+            const startDate = new Date(yStart, mStart - 1, 1, 0, 0, 0, 0);
+
+            const [yEnd, mEnd] = end.split('-').map(Number);
+            const endDate = new Date(yEnd, mEnd, 0, 23, 59, 59, 999);
             if (d.tanggal < startDate || d.tanggal > endDate) return;
         }
         if (filterType === 'tahun' && start && end) {
@@ -99,10 +131,11 @@ function renderBeranda(filterType = null, start = null, end = null) {
     // Chart data
     let labels = [], dataMasuk = [], dataKeluar = [];
     if (filterType === 'bulan' && start && end) {
-        let current = new Date(start + '-01');
-        const [yEnd, mEnd] = end.split('-');
-        const endDate = new Date(Number(yEnd), Number(mEnd), 1);
+        const [yStart, mStart] = start.split('-').map(Number);
+        let current = new Date(yStart, mStart - 1, 1);
 
+        const [yEnd, mEnd] = end.split('-').map(Number);
+        const endDate = new Date(yEnd, mEnd - 1, 1);
         while (current <= endDate) {
             const key = `${current.getFullYear()}-${String(current.getMonth()+1).padStart(2,'0')}`;
 
@@ -292,6 +325,7 @@ function renderTransaksi(filterMonth=null){
     filtered
         .sort((a,b)=>a.tanggal - b.tanggal)
         .forEach(d=>{
+            if (!d.tanggal) return; // Skip entries with invalid dates
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="text-align:center;">${formatTanggal(d.tanggal)}</td>
@@ -303,16 +337,22 @@ function renderTransaksi(filterMonth=null){
         });
 }
 
-document.getElementById('btn-filter-transaksi').addEventListener('click', ()=>{
-    const periode = document.getElementById('filter-transaksi').value;
-    if(!periode) return alert("Pilih bulan dan tahun");
-    renderTransaksi(periode);
-});
+const btnFilterTransaksi = document.getElementById('btn-filter-transaksi');
+if (btnFilterTransaksi) {
+    btnFilterTransaksi.addEventListener('click', ()=>{
+        const periode = document.getElementById('filter-transaksi').value;
+        if(!periode) return alert("Pilih bulan dan tahun");
+        renderTransaksi(periode);
+    });
+}
 
-document.getElementById('btn-reset-transaksi').addEventListener('click', ()=>{
-    document.getElementById('filter-transaksi').value = '';
-    renderTransaksi();
-});
+const btnResetTransaksi = document.getElementById('btn-reset-transaksi');
+if (btnResetTransaksi) {
+    btnResetTransaksi.addEventListener('click', ()=>{
+        document.getElementById('filter-transaksi').value = '';
+        renderTransaksi();
+    });
+}
 
 /* =========================
    Helpers
@@ -472,6 +512,7 @@ function getCatatanTahunanData(tahun) {
     let totalKeluar = 0;
 
     Object.keys(bulanMap).forEach((bulan, index) => {
+        const bulanNum = Number(bulan);
         const masuk = bulanMap[bulan].pemasukan;
         const keluar = bulanMap[bulan].pengeluaran;
         const saldo = masuk - keluar;
@@ -481,8 +522,8 @@ function getCatatanTahunanData(tahun) {
 
         rows.push({
             no: index + 1,
-            bulanIndex: Number(bulan),
-            bulanText: new Date(tahun, bulan)
+            bulanIndex: bulanNum,
+            bulanText: new Date(tahun, bulanNum)
                 .toLocaleDateString('id-ID', { month: 'long' }),
             pemasukan: masuk,
             pengeluaran: keluar,
@@ -540,49 +581,65 @@ setModeCatatan(
     document.querySelector('input[name="catatan-mode"]:checked').value
 );
 
-document.getElementById('btn-tampil-catatan').addEventListener('click', () => {
-    const mode = document.querySelector('input[name="catatan-mode"]:checked').value;
-
-    if (mode === 'bulan') {
-        const periode = inputBulan.value;
-        if (!periode) {
-            alert('Pilih bulan dan tahun');
+const btnTampilCatatan = document.getElementById('btn-tampil-catatan');
+if (btnTampilCatatan) {
+    btnTampilCatatan.addEventListener('click', () => {
+        const checkedRadio = document.querySelector('input[name="catatan-mode"]:checked');
+        if (!checkedRadio) {
+            alert('Pilih mode catatan');
             return;
         }
-        tampilkanCatatan(periode);
-    }
+        const mode = checkedRadio.value;
 
-    if (mode === 'tahun') {
-        const tahun = inputTahun.value;
-        if (!tahun) {
-            alert('Pilih tahun');
+        if (mode === 'bulan') {
+            const periode = inputBulan.value;
+            if (!periode) {
+                alert('Pilih bulan dan tahun');
+                return;
+            }
+            tampilkanCatatan(periode);
+        }
+
+        if (mode === 'tahun') {
+            const tahun = inputTahun.value;
+            if (!tahun) {
+                alert('Pilih tahun');
+                return;
+            }
+            tampilkanCatatanTahunan(tahun);
+        }
+    });
+}
+
+const btnPdfCatatan = document.getElementById('btn-pdf-catatan');
+if (btnPdfCatatan) {
+    btnPdfCatatan.addEventListener('click', () => {
+        const checkedRadio = document.querySelector('input[name="catatan-mode"]:checked');
+        if (!checkedRadio) {
+            alert('Pilih mode catatan');
             return;
         }
-        tampilkanCatatanTahunan(tahun);
-    }
-});
+        const mode = checkedRadio.value;
 
-document.getElementById('btn-pdf-catatan').addEventListener('click', () => {
-    const mode = document.querySelector('input[name="catatan-mode"]:checked').value;
-
-    if (mode === 'bulan') {
-        const periode = inputBulan.value;
-        if (!periode) {
-            alert('Pilih periode bulanan');
-            return;
+        if (mode === 'bulan') {
+            const periode = inputBulan.value;
+            if (!periode) {
+                alert('Pilih periode bulanan');
+                return;
+            }
+            generatePdfBulanan(periode);
         }
-        generatePdfBulanan(periode);
-    }
 
-    if (mode === 'tahun') {
-        const tahun = inputTahun.value;
-        if (!tahun) {
-            alert('Pilih tahun');
-            return;
+        if (mode === 'tahun') {
+            const tahun = inputTahun.value;
+            if (!tahun) {
+                alert('Pilih tahun');
+                return;
+            }
+            generatePdfTahunan(tahun);
         }
-        generatePdfTahunan(tahun);
-    }
-});
+    });
+}
 
 function generatePdfBulanan(periode) {
     const {
@@ -612,8 +669,6 @@ function generatePdfBulanan(periode) {
 
     doc.setFont('helvetica', 'normal');
     doc.text(periodeText, 105, 29, { align: 'center' });
-
-    doc.line(PAGE_MARGIN, 33, PAGE_WIDTH - PAGE_MARGIN, 33);
 
     /* =========================
        RINGKASAN BULANAN
@@ -757,7 +812,6 @@ function generatePdfTahunan(tahun) {
     doc.text(periodeText, 105, 29, { align: 'center' });
 
     doc.setDrawColor(0);
-    doc.line(PAGE_MARGIN, 33, PAGE_WIDTH - PAGE_MARGIN, 33);
 
     /* =========================
        RINGKASAN TAHUNAN
@@ -875,12 +929,24 @@ const formatJenis = jenis =>
 // =======================
 // Navigasi Section
 // =======================
-document.querySelectorAll('header nav button').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-        document.querySelectorAll('.section').forEach(s=>s.style.display='none');
-        document.getElementById(btn.dataset.section).style.display='block';
-        document.querySelectorAll('header nav button').forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
+const navButtons = document.querySelectorAll('header nav button');
+if (navButtons.length > 0) {
+    navButtons.forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+            document.querySelectorAll('.section').forEach(s=>s.style.display='none');
+            const targetSection = document.getElementById(btn.dataset.section);
+            if (targetSection) {
+                targetSection.style.display='block';
+            } else {
+                console.warn(`Section not found: ${btn.dataset.section}`);
+            }
+            navButtons.forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active');
+        });
     });
-});
-document.getElementById('beranda').style.display='block';
+}
+
+const berandaSection = document.getElementById('beranda');
+if (berandaSection) {
+    berandaSection.style.display='block';
+}
